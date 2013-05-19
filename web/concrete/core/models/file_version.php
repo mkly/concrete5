@@ -1,9 +1,11 @@
 <?
+defined('C5_EXECUTE') or die("Access Denied.");
 
 class Concrete5_Model_FileVersion extends Object {
 
 	private $numThumbnailLevels = 3;
 	private $attributes = array();
+	protected $class;
 
 	// Update type constants
 	const UT_REPLACE_FILE = 1;
@@ -11,6 +13,19 @@ class Concrete5_Model_FileVersion extends Object {
 	const UT_DESCRIPTION = 3;
 	const UT_TAGS = 4;
 	const UT_EXTENDED_ATTRIBUTE = 5;
+
+	/**
+	 * We don't have a factory method to serve
+	 * the proper class and we can't return a
+	 * different class in php __construct()
+	 * So we track the specialty class and assign
+	 * $this to parent property of that class
+	 */
+	public function __construct() {
+		$class = 'FileVersion'.FILE_STORAGE_METHOD;
+		$this->class  = new $class;
+		$this->class->parent = &$this;
+	}
 
 	public function getFileID() {return $this->fID;}
 	public function getFileVersionID() {return $this->fvID;}
@@ -274,7 +289,6 @@ class Concrete5_Model_FileVersion extends Object {
 		$fo->refreshCache();
 	}
 
-
 	public function updateDescription($descr) {
 		$db = Loader::db();
 		$db->Execute("update FileVersions set fvDescription = ? where fID = ? and fvID = ?", array($descr, $this->getFileID(), $this->getFileVersionID()));
@@ -350,22 +364,14 @@ class Concrete5_Model_FileVersion extends Object {
 	 * Returns a full filesystem path to the file on disk.
 	 */
 	public function getPath() {
-		$f = Loader::helper('concrete/file');
-		if ($this->fslID > 0) {
-			Loader::model('file_storage_location');
-			$fsl = FileStorageLocation::getByID($this->fslID);
-			$path = $f->mapSystemPath($this->fvPrefix, $this->fvFilename, false, $fsl->getDirectory());
-		} else {
-			$path = $f->getSystemPath($this->fvPrefix, $this->fvFilename);
-		}
-		return $path;
+		return $this->class->getPath();
 	}
 
 	/**
 	 * Returns a full URL to the file on disk
 	 */
 	public function getURL() {
-		return BASE_URL . $this->getRelativePath();
+		return $this->class->getURL();
 	}
 
 	/**
@@ -396,23 +402,7 @@ class Concrete5_Model_FileVersion extends Object {
 	
 
 	public function getRelativePath($fullurl = false) {
-		$f = Loader::helper('concrete/file');
-		if ($this->fslID > 0) {
-			$c = Page::getCurrentPage();
-			if($c instanceof Page) {
-				$cID = $c->getCollectionID();
-			} else {
-				$cID = 0;
-			}
-			$path = BASE_URL . View::url('/download_file', 'view_inline', $this->getFileID(),$cID);
-		} else {
-			if ($fullurl) {
-				$path = BASE_URL . $f->getFileRelativePath($this->fvPrefix, $this->fvFilename );
-			} else {
-				$path = $f->getFileRelativePath($this->fvPrefix, $this->fvFilename );
-			}
-		}
-		return $path;
+		return $this->class->getRelativePath($fullurl);
 	}
 
 	public function getThumbnailPath($level) {

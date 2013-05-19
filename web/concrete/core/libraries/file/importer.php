@@ -21,6 +21,7 @@ defined('C5_EXECUTE') or die("Access Denied.");
  */
 class Concrete5_Library_FileImporter {
 	
+	protected $class;
 	/** 
 	 * PHP error constants - these match those founds in $_FILES[$field]['error] if it exists
 	 */
@@ -37,6 +38,12 @@ class Concrete5_Library_FileImporter {
 	const E_FILE_INVALID = 11; // pointer is invalid file, is a directory, etc...
 	const E_FILE_UNABLE_TO_STORE = 12;
 	
+	public function __construct() {
+		$class = 'FileImporter'.FILE_STORAGE_METHOD;
+		$this->class = new $class;
+		$this->class->parent = &$this;
+	}
+
 	/** 
 	 * Returns a text string explaining the error that was passed
 	 */
@@ -67,32 +74,11 @@ class Concrete5_Library_FileImporter {
 		}
 		return $msg;
 	}
-	
-	private function generatePrefix() {
-		$prefix = rand(10, 99) . time();
-		return $prefix;	
+
+	protected function storeFile($prefix, $pointer, $filename, $fr = false) {
+		return $this->class->storeFile($prefix, $pointer, $filename, $fr);
 	}
-	
-	private function storeFile($prefix, $pointer, $filename, $fr = false) {
-		// assumes prefix are 12 digits
-		$fi = Loader::helper('concrete/file');
-		$path = false;
-		if ($fr instanceof File) {
-			if ($fr->getStorageLocationID() > 0) {
-				Loader::model('file_storage_location');
-				$fsl = FileStorageLocation::getByID($fr->getStorageLocationID());
-				$path = $fi->mapSystemPath($prefix, $filename, true, $fsl->getDirectory());
-			}
-		}
-		
-		if ($path == false) {
-			$path = $fi->mapSystemPath($prefix, $filename, true);
-		}
-		$r = @copy($pointer, $path);
-		@chmod($path, FILE_PERMISSIONS_MODE);
-		return $r;
-	}
-	
+
 	/** 
 	 * Imports a local file into the system. The file must be added to this path
 	 * somehow. That's what happens in tools/files/importers/.
@@ -104,50 +90,7 @@ class Concrete5_Library_FileImporter {
 	 * @return number Error Code | FileVersion
 	 */
 	public function import($pointer, $filename = false, $fr = false) {
-		
-		if ($filename == false) {
-			// determine filename from $pointer
-			$filename = basename($pointer);
-		}
-		
-		$fh = Loader::helper('validation/file');
-		$fi = Loader::helper('file');
-		$filename = $fi->sanitize($filename);
-		
-		// test if file is valid, else return FileImporter::E_FILE_INVALID
-		if (!$fh->file($pointer)) {
-			return FileImporter::E_FILE_INVALID;
-		}
-		
-		if (!$fh->extension($filename)) {
-			return FileImporter::E_FILE_INVALID_EXTENSION;
-		}
-
-		
-		$prefix = $this->generatePrefix();
-		
-		// do save in the FileVersions table
-		
-		// move file to correct area in the filesystem based on prefix
-		$response = $this->storeFile($prefix, $pointer, $filename, $fr);
-		if (!$response) {
-			return FileImporter::E_FILE_UNABLE_TO_STORE;
-		}
-		
-		if (!($fr instanceof File)) {
-			// we have to create a new file object for this file version
-			$fv = File::add($filename, $prefix);
-			$fv->refreshAttributes(true);
-			$fr = $fv->getFile();
-		} else {
-			// We get a new version to modify
-			$fv = $fr->getVersionToModify(true);
-			$fv->updateFile($filename, $prefix);
-			$fv->refreshAttributes();
-		}
-
-		$fr->refreshCache();
-		return $fv;
+		return $this->class->import($pointer, $filename, $fr);
 	}
 	
 }
