@@ -466,41 +466,9 @@ class Concrete5_Model_FileVersion extends Object {
 	 * etc...
 	 */
 	public function refreshAttributes($firstRun = false) {
-		$fh = Loader::helper('file');
-		$ext = $fh->getExtension($this->fvFilename);
-		$ftl = FileTypeList::getType($ext);
-		$db = Loader::db();
-
-		if (!file_exists($this->getPath())) {
-			return File::F_ERROR_FILE_NOT_FOUND;
-		}
-
-		$size = filesize($this->getPath());
-
-		$title = ($firstRun) ? $this->getFilename() : $this->getTitle();
-
-		$db->Execute('update FileVersions set fvExtension = ?, fvType = ?, fvTitle = ?, fvSize = ? where fID = ? and fvID = ?',
-			array($ext, $ftl->getGenericType(), $title, $size, $this->getFileID(), $this->getFileVersionID())
-		);
-		if (is_object($ftl)) {
-			if ($ftl->getCustomImporter() != false) {
-				Loader::library('file/inspector');
-
-				$db->Execute('update FileVersions set fvGenericType = ? where fID = ? and fvID = ?',
-					array($ftl->getGenericType(), $this->getFileID(), $this->getFileVersionID())
-				);
-
-				// we have a custom library script that handles this stuff
-				$cl = $ftl->getCustomInspector();
-				$cl->inspect($this);
-
-			}
-		}
-		$this->refreshThumbnails(false);
-		$f = $this->getFile();
-		$f->refreshCache();
-		$f->reindex();
+		return $this->class->refreshAttributes($firstRun);
 	}
+
 
 	public function createThumbnailDirectories(){
 		$f = Loader::helper('concrete/file');
