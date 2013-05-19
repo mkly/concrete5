@@ -6,8 +6,7 @@ class Concrete5_Model_FileVersionS3 {
 
 	public function refreshAttributes($firstRun = false) {
 		Loader::library('3rdparty/S3');
-		$fh = Loader::helper('file');
-		$ext = $fh->getExtension($this->fvFilename);
+		$ext = Loader::helper('file')->getExtension($this->parent->fvFilename);
 		$ftl = FileTypeList::getType($ext);
 		$db = Loader::db();
 
@@ -43,7 +42,7 @@ class Concrete5_Model_FileVersionS3 {
 	}
 
 	public function getPath() {
-		return AWS_ENDPOINT . '/' . AWS_BUCKET . '/' . $this->parent->fvFilename;
+		return 'http://' . AWS_ENDPOINT . '/' . urlencode(AWS_BUCKET) . '/' . urlencode($this->parent->fvPrefix . '-' . $this->parent->fvFilename);
 	}
 
 	public function getRelativePath($fullurl = false) {
@@ -51,7 +50,7 @@ class Concrete5_Model_FileVersionS3 {
 	}
 
 	public function getURL() {
-		return 'http://' . AWS_ENDPOINT . '/' . AWS_BUCKET . '/' . $this->parent->fvFilename;
+		return $this->getPath();
 	}
 
 }
