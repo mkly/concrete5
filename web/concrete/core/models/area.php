@@ -279,7 +279,7 @@ class Concrete5_Model_Area extends Object {
 		$db = Loader::db();
 		// First, we verify that this is a legitimate area
 		$v = array($c->getCollectionID(), $arHandle);
-		$q = "select arID, arOverrideCollectionPermissions, arInheritPermissionsFromAreaOnCID, arIsGlobal from Areas where cID = ? and arHandle = ?";
+		$q = "select arID, arOverrideCollectionPermissions, arInheritPermissionsFromAreaOnCID, arIsGlobal from Areas where cID = ? and arHandle = ? order by arIsGlobal";
 		$arRow = $db->getRow($q, $v);
 		if ($arRow['arID'] > 0) {
 			$area = new Area($arHandle);
@@ -356,7 +356,6 @@ class Concrete5_Model_Area extends Object {
 		$this->cID = $c->getCollectionID();
 		$this->c = $c;
 		$this->areaBlocksArray = array();
-		
 		if ($this->arIsGlobal) {
 			$blocks = array();
 			$cp = new Permissions($c);
