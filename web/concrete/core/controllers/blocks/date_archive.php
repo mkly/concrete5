@@ -15,6 +15,8 @@ class Concrete5_Controller_Block_DateArchive extends BlockController {
 
 	protected $btExportPageColumns = array('targetCID');
 	protected $btCacheBlockRecord = true;
+
+	protected $btWrapperClass = 'ccm-ui';
 		
 	public $helpers =  array('navigation');	
 	
