@@ -22,11 +22,14 @@ class Concrete5_Library_Router {
 		$this->request = $req;
 	}
 	
+	/**
+	 * @return Router
+	 */
 	public static function getInstance() {
-		if (null == self::$instance) {
-			self::$instance = new static;
+		if (null === static::$instance) {
+			static::$instance = new static;
 		}
-		return self::$instance;
+		return static::$instance;
 	}
 
 	public function register($rtPath, $callback, $rtHandle = null, $additionalAttributes = array()) {
